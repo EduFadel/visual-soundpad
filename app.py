@@ -18,7 +18,7 @@ try:
     pygame.mixer.pre_init(frequency=48000, size=-16, channels=2, buffer=4096)
     pygame.mixer.init()
 except Exception as e:
-    print(f"Erro ao iniciar sistema de áudio: {e}")
+    print(f"Erro starting audio system: {e}")
 
 # --- 2. VARIÁVEIS GLOBAIS ---
 rodando_ia = False
@@ -32,10 +32,11 @@ dados_config = load_json_config(ARQUIVO_CONFIG)
 def reload_sounds():
     """Lê a configuração global e carrega os sons no Pygame."""
     global sons_carregados
-    print("--- Recarregando Sons ---")
+    print("--- Reloading sounds ---")
     
     vol = dados_config.get("volume", 1.0)
     gestos = dados_config.get("gestures", {})
+    aliases = dados_config.get("aliases", {}) # Pega os apelidos
     
     novos_sons = {}
     
@@ -45,12 +46,17 @@ def reload_sounds():
                 qtd = int(gesto_str)
                 som = pygame.mixer.Sound(caminho)
                 som.set_volume(vol)
-                # Guardamos o objeto som e o nome do arquivo para mostrar na tela
-                nome_limpo = os.path.splitext(os.path.basename(caminho))[0]
-                novos_sons[qtd] = {"obj": som, "txt": nome_limpo}
-                print(f"[OK] Gesto {qtd}: {nome_limpo}")
+                
+                # LÓGICA NOVA: Prioriza o Alias, senão usa nome do arquivo
+                if gesto_str in aliases:
+                    nome_exibicao = aliases[gesto_str]
+                else:
+                    nome_exibicao = os.path.splitext(os.path.basename(caminho))[0]
+                
+                novos_sons[qtd] = {"obj": som, "txt": nome_exibicao}
+                print(f"[OK] Gesture {qtd}: {nome_exibicao}")
             except Exception as e:
-                print(f"[ERRO] Falha ao carregar {caminho}: {e}")
+                print(f"[ERRO] Error loading {caminho}: {e}")
     
     sons_carregados = novos_sons
 
@@ -89,8 +95,8 @@ def main_camera_loop():
     ja_tocou = False
     
     # Textos para o Overlay
-    status_topo = "Aguardando gesto..."
-    msg_principal = "Iniciado"
+    status_topo = "Waiting for gesture..."
+    msg_principal = "Starting..."
     
     # Garante que os sons estão atualizados ao abrir a câmera
     reload_sounds()
@@ -117,7 +123,7 @@ def main_camera_loop():
             gesto_analisado = gesto_agora
             inicio_contagem = time.time()
             ja_tocou = False
-            status_topo = "Detectando..."
+            status_topo = "Detecting..."
             progresso = 0.0
         else:
             tempo_decorrido = time.time() - inicio_contagem
@@ -128,24 +134,24 @@ def main_camera_loop():
                 nome_som = sons_carregados[gesto_agora]['txt']
                 
                 if not ja_tocou:
-                    msg_principal = f"Carregando: {nome_som}"
-                    status_topo = f"Segure... {int(progresso*100)}%"
+                    msg_principal = f"Loading: {nome_som}"
+                    status_topo = f"Hold... {int(progresso*100)}%"
                     
                     if tempo_decorrido >= 1.0:
                         try:
                             sons_carregados[gesto_agora]["obj"].play()
                             ja_tocou = True
-                            msg_principal = f"TOCANDO: {nome_som}"
-                            status_topo = "Sucesso!"
+                            msg_principal = f"Sound: {nome_som}"
+                            status_topo = "Success!"
                         except:
-                            msg_principal = "Erro ao tocar"
+                            msg_principal = "Error playing sound"
                 else:
                     # Mantém a mensagem de sucesso enquanto segura o gesto
-                    msg_principal = f"TOCADO: {nome_som}"
-                    status_topo = "Solte para reiniciar"
+                    msg_principal = f"Sound: {nome_som}"
+                    status_topo = "Release to restart"
             else:
-                msg_principal = "Sem áudio definido"
-                status_topo = f"Dedos: {gesto_agora}"
+                msg_principal = "No defined sound"
+                status_topo = f"Fingers: {gesto_agora}"
                 progresso = 0.0
 
         # --- Desenha o HUD Moderno ---

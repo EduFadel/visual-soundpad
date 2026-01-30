@@ -21,12 +21,16 @@ def truncate_text(text, max_length=35):
 
 class SoundpadInterface:
     def __init__(self, root, config_inicial, callback_iniciar_ia, callback_atualizar_config):
+        # ... (O __init__ continua igual, só lembre de garantir que aliases exista na config local se necessário, mas o helper já faz isso) ...
         self.root = root
         self.config = config_inicial
         self.callback_iniciar_ia = callback_iniciar_ia
         self.callback_atualizar_config = callback_atualizar_config
         self.labels_caminhos = {} 
         self.rodando = False
+        
+        # Garante que aliases existe localmente pra evitar erro visual
+        if "aliases" not in self.config: self.config["aliases"] = {}
 
         # Configuração da Janela Principal (Mais estreita e alta)
         self.root.title("Visual Soundpad")
@@ -71,25 +75,31 @@ class SoundpadInterface:
         self.btn_action.pack(fill="x", padx=10, pady=(5, 15))
 
     def criar_slot_vertical(self, parent, numero_gesto):
-        # Card individual (Uma linha na lista)
         card = ctk.CTkFrame(parent, corner_radius=8, fg_color=("#3a3a3a", "#333333"), height=45)
         card.pack(pady=3, fill="x", anchor="n")
 
-        # Número (Esquerda)
-        # Usando CTkLabel redondo em vez de botão para ficar mais limpo
+        # Número
         lbl_num = ctk.CTkLabel(card, text=str(numero_gesto), width=24, height=24, 
                                 fg_color="#444444", corner_radius=12, font=("Arial", 12, "bold"))
         lbl_num.pack(side="left", padx=(8, 5), pady=8)
 
-        # Nome do Arquivo (Centro - Truncado)
+        # Nome do Arquivo / Alias
+        str_num = str(numero_gesto)
         gestos = self.config.get("gestures", {})
-        path_atual = gestos.get(str(numero_gesto), None)
+        aliases = self.config.get("aliases", {})
+        
+        path_atual = gestos.get(str_num, None)
         
         if path_atual and os.path.exists(path_atual):
-            nome_completo = os.path.basename(path_atual)
-            # AQUI ESTÁ A MÁGICA: Trunca o texto se for longo
-            texto_display = truncate_text(nome_completo, max_length=30)
-            cor_texto = "white"
+            # Se tiver alias, usa ele. Se não, usa nome do arquivo.
+            if str_num in aliases:
+                texto_base = aliases[str_num]
+                cor_texto = "#4CC9F0" # Azul claro para indicar nome personalizado
+            else:
+                texto_base = os.path.basename(path_atual)
+                cor_texto = "white"
+                
+            texto_display = truncate_text(texto_base, max_length=25)
         else:
             texto_display = "Selecionar áudio..."
             cor_texto = "gray"
@@ -99,20 +109,59 @@ class SoundpadInterface:
         lbl_arquivo.pack(side="left", fill="x", expand=True, padx=5)
         self.labels_caminhos[numero_gesto] = lbl_arquivo
 
-        # Botões de Ação (Direita - Pequenos)
-        # Botão X (Vermelho discreto)
-        btn_limpar = ctk.CTkButton(card, text="×", width=BTN_HEIGHT, height=BTN_HEIGHT, 
-                                   fg_color=("#552222", "#3a1f1f"), hover_color="#C0392B",
-                                   font=("Arial", 14), text_color="#ff5555",
-                                   command=lambda: self.limpar_slot(numero_gesto))
-        btn_limpar.pack(side="right", padx=(2, 8))
+        # --- BOTÕES DE AÇÃO ---
+        
+        FONT_ICON = ("Segoe UI Emoji", 18) 
 
-        # Botão Pasta (Azul discreto)
+        # 1. Botão Lápis (Renomear)
+        # Usei o emoji ✏️
+        btn_edit = ctk.CTkButton(card, text="✏️", width=BTN_HEIGHT, height=BTN_HEIGHT, 
+                                   fg_color="transparent", hover_color="#444444",
+                                   font=FONT_ICON, text_color="#E67E22", # Laranja no texto
+                                   command=lambda: self.renomear_som(numero_gesto))
+        btn_edit.pack(side="right", padx=(0, 0))
+
+        # 2. Botão Lixeira (Limpar)
+        # Troquei o X pela Lixeira 🗑️ que é mais intuitiva
+        btn_limpar = ctk.CTkButton(card, text="🗑️", width=BTN_HEIGHT, height=BTN_HEIGHT, 
+                                   fg_color="transparent", hover_color="#444444",
+                                   font=FONT_ICON, text_color="#E74C3C", # Vermelho no texto
+                                   command=lambda: self.limpar_slot(numero_gesto))
+        btn_limpar.pack(side="right", padx=0)
+
+        # 3. Botão Pasta (Selecionar)
+        # Usei a pasta aberta 📂
         btn_pasta = ctk.CTkButton(card, text="📂", width=BTN_HEIGHT, height=BTN_HEIGHT,
-                                  fg_color=("#223344", "#1f2a3a"), hover_color="#2980B9",
-                                  font=FONT_SMALL,
+                                  fg_color="transparent", hover_color="#444444",
+                                  font=FONT_ICON, text_color="#3498DB", # Azul no texto
                                   command=lambda: self.selecionar_arquivo(numero_gesto))
-        btn_pasta.pack(side="right", padx=0)
+        btn_pasta.pack(side="right", padx=(5, 0))
+
+    # --- FUNÇÃO NOVA ---
+    def renomear_som(self, numero_gesto):
+        str_num = str(numero_gesto)
+        
+        # Só permite renomear se já tiver um áudio selecionado
+        if str_num not in self.config.get("gestures", {}):
+            return
+
+        # Abre Popup pedindo o nome
+        dialog = ctk.CTkInputDialog(text="Novo nome para o áudio:", title="Renomear")
+        novo_nome = dialog.get_input()
+        
+        if novo_nome:
+            if "aliases" not in self.config: self.config["aliases"] = {}
+            
+            # Salva o apelido
+            self.config["aliases"][str_num] = novo_nome
+            
+            # Atualiza visualmente na hora
+            self.labels_caminhos[numero_gesto].configure(
+                text=truncate_text(novo_nome, 25), 
+                text_color="#4CC9F0"
+            )
+            # Salva no JSON
+            self.callback_atualizar_config()
 
     # --- Métodos de Lógica (Iguais aos anteriores) ---
     def ao_mudar_volume(self, valor):
@@ -122,8 +171,17 @@ class SoundpadInterface:
 
     def limpar_slot(self, numero_gesto):
         str_num = str(numero_gesto)
-        if "gestures" in self.config and str_num in self.config["gestures"]:
+        mudou = False
+        if str_num in self.config.get("gestures", {}):
             del self.config["gestures"][str_num]
+            mudou = True
+        
+        # Se limpar o slot, remove o alias também pra não ficar lixo
+        if str_num in self.config.get("aliases", {}):
+            del self.config["aliases"][str_num]
+            mudou = True
+            
+        if mudou:
             self.labels_caminhos[numero_gesto].configure(text="Selecionar áudio...", text_color="gray")
             self.callback_atualizar_config()
 

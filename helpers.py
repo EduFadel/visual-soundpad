@@ -82,22 +82,28 @@ def draw_modern_overlay(img, progresso, texto_principal, texto_secundario=""):
 # --- FUNÇÕES DE ARQUIVO (NOVO) ---
 
 def load_json_config(caminho):
-    """Carrega configuração ou retorna padrão se falhar."""
-    padrao = {"volume": 1.0, "gestures": {}}
+    """Carrega configuração e garante estrutura correta."""
+    padrao = {"volume": 1.0, "gestures": {}, "aliases": {}} # Nova estrutura padrão
+    
     if os.path.exists(caminho):
         try:
             with open(caminho, 'r') as f:
                 data = json.load(f)
-                # Migração de versão antiga
+                
+                # Migração 1: Formato antigo só com gestos
                 if "gestures" not in data:
-                    return {"volume": 1.0, "gestures": data}
+                    data = {"volume": 1.0, "gestures": data}
+                
+                # Migração 2: Adicionar aliases se não existir
+                if "aliases" not in data:
+                    data["aliases"] = {}
+                    
                 return data
         except:
             return padrao
     return padrao
 
 def save_json_config(caminho, dados):
-    """Salva os dados no arquivo."""
     try:
         with open(caminho, 'w') as f:
             json.dump(dados, f, indent=4)
