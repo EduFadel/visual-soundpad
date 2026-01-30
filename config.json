@@ -1,4 +1,8 @@
 {
     "volume": 1.0,
-    "gestures": {}
+    "gestures": {
+        "1": "D:/Edi\u00e7\u00e3o/Efeitos sonoros/hehe-boy.mp3",
+        "2": "D:/Edi\u00e7\u00e3o/Efeitos sonoros/Button_Plate Click (Minecraft Sound) - Sound Effect for editing 4.mp3",
+        "3": "D:/Edi\u00e7\u00e3o/Efeitos sonoros/a vanish audio.mp3"
+    }
 }
