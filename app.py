@@ -114,7 +114,27 @@ def main_camera_loop():
         
         # Desenha esqueleto e conta dedos (Soma das duas mãos)
         if results.multi_hand_landmarks:
-            for hand_lms in results.multi_hand_landmarks:
+            ignorar_segunda_mao = False
+
+            # Se detectar 2 mãos, verifica se elas não são a mesma (sobrepostas)
+            if len(results.multi_hand_landmarks) == 2:
+                pulso1 = results.multi_hand_landmarks[0].landmark[0]
+                pulso2 = results.multi_hand_landmarks[1].landmark[0]
+                
+                # Calcula a distância entre os pulsos (horizontal e vertical)
+                dist_x = abs(pulso1.x - pulso2.x)
+                dist_y = abs(pulso1.y - pulso2.y)
+                
+                # Se a distância for menor que 10% da tela, considera duplicata
+                if dist_x < 0.1 and dist_y < 0.1:
+                    ignorar_segunda_mao = True
+
+            # Loop para desenhar e contar
+            for i, hand_lms in enumerate(results.multi_hand_landmarks):
+                # Se marcamos para ignorar e este é o segundo item (índice 1), pula
+                if i == 1 and ignorar_segunda_mao:
+                    continue
+                
                 mp_draw.draw_landmarks(img, hand_lms, mp_hands.HAND_CONNECTIONS)
                 gesto_agora += count_fingers(hand_lms)
         
