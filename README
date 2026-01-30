@@ -1,12 +1,12 @@
-# 🖐️ Visual SoundPad
+# Visual SoundPad
 
-A computer vision-controlled soundpad. You make hand gestures (1 to 5 fingers), and audio plays through your microphone for your friends to hear.
+A computer vision-controlled soundpad. You make hand gestures (1 to 10 fingers), and audio plays through your microphone for your friends to hear.
 
 ## 🚀 Installation
 
 ### 1. Required Software
 * Python (3.10 or 3.11 recommended)
-* VoiceMeeter Banana (To mix the audio): https://vb-audio.com/Voicemeeter/banana.htm
+* VoiceMeeter Banana or Potato(To mix the audio): https://vb-audio.com/Voicemeeter/banana.htm
 
 ### 2. Install Libraries
 Open the terminal in the project folder and run:
@@ -14,7 +14,7 @@ pip install -r requirements.txt
 
 ---
 
-## 🎛️ Audio Setup (Crucial!)
+## Audio Setup (Crucial!)
 
 To ensure audio goes to Discord without echo or stuttering, configure VoiceMeeter Banana exactly like this:
 
@@ -34,14 +34,14 @@ To ensure audio goes to Discord without echo or stuttering, configure VoiceMeete
 - Click the sound icon and select as default output: **VoiceMeeter Input (VB-Audio VoiceMeeter VAIO)**.
 - This ensures PC audio goes to the middle column of VoiceMeeter.
 
-### ⚠️ Important (Anti-Robot Voice):
+### Important (Anti-Robot Voice):
 Ensure both VoiceMeeter and Windows are set to **48000Hz**.
 - VoiceMeeter: Menu > System Settings > Preferred SampleRate: 48000Hz.
 - Windows: Old Sound Panel (mmsys.cpl) > Recording/Playback > Properties > Advanced > 48000Hz.
 
 ---
 
-## 🎧 Discord Setup
+## Discord Setup
 
 For your friends to hear high-quality audio:
 
@@ -53,7 +53,7 @@ For your friends to hear high-quality audio:
 
 ---
 
-## 🕹️ How to Use
+## How to Use
 
 1. Run the script: python app.py
 2. Click the folder icons 📂 to select your audio files (MP3/WAV).
