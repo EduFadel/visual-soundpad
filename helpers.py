@@ -82,25 +82,52 @@ def draw_modern_overlay(img, progresso, texto_principal, texto_secundario=""):
 # --- FUNÇÕES DE ARQUIVO (NOVO) ---
 
 def load_json_config(caminho):
-    """Carrega configuração e garante estrutura correta."""
-    padrao = {"volume": 1.0, "gestures": {}, "aliases": {}} # Nova estrutura padrão
+    """
+    Carrega configuração e migra automaticamente para o sistema de perfis.
+    """
+    # Estrutura padrão nova
+    padrao = {
+        "volume": 1.0, 
+        "current_profile": "Padrão",
+        "profiles": {
+            "Padrão": {"gestures": {}, "aliases": {}}
+        }
+    }
     
     if os.path.exists(caminho):
         try:
-            with open(caminho, 'r') as f:
+            with open(caminho, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 
-                # Migração 1: Formato antigo só com gestos
-                if "gestures" not in data:
-                    data = {"volume": 1.0, "gestures": data}
-                
-                # Migração 2: Adicionar aliases se não existir
-                if "aliases" not in data:
-                    data["aliases"] = {}
+                # --- MIGRAÇÃO AUTOMÁTICA ---
+                # Se o JSON tem 'gestures' na raiz, é o modelo antigo.
+                # Vamos mover esses dados para dentro de um perfil "Padrão".
+                if "profiles" not in data:
+                    print("Migrando dados antigos para perfil Padrão...")
+                    gestos_antigos = data.get("gestures", {})
+                    aliases_antigos = data.get("aliases", {})
+                    vol_antigo = data.get("volume", 1.0)
                     
+                    data = {
+                        "volume": vol_antigo,
+                        "current_profile": "Padrão",
+                        "profiles": {
+                            "Padrão": {
+                                "gestures": gestos_antigos,
+                                "aliases": aliases_antigos
+                            }
+                        }
+                    }
+                    # Salva a versão convertida imediatamente
+                    save_json_config(caminho, data)
+                
                 return data
-        except:
+        except Exception as e:
+            print(f"Erro ao ler config: {e}. Criando novo.")
             return padrao
+            
+    # Se não existe arquivo, cria o padrão
+    save_json_config(caminho, padrao)
     return padrao
 
 def save_json_config(caminho, dados):

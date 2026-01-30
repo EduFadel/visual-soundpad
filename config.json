@@ -1,12 +1,26 @@
 {
     "volume": 1.0,
-    "gestures": {
-        "1": "D:/Edi\u00e7\u00e3o/Efeitos sonoros/hehe-boy.mp3",
-        "3": "D:/Edi\u00e7\u00e3o/Efeitos sonoros/a vanish audio.mp3",
-        "2": "D:/Edi\u00e7\u00e3o/Efeitos sonoros/[Super Mario 64] Mario - YAHOO  Sound Effect [Free Ringtone Download].mp3"
-    },
-    "aliases": {
-        "2": "mario yahoo",
-        "3": "asasd"
+    "current_profile": "Minecraft",
+    "profiles": {
+        "Padr\u00e3o": {
+            "gestures": {
+                "1": "C:/Users/2edua/Downloads/stone-slide-sound-effects.mp3"
+            },
+            "aliases": {}
+        },
+        "Arc Raiders": {
+            "gestures": {
+                "1": "C:/Users/2edua/Downloads/probe.wav",
+                "2": "C:/Users/2edua/Downloads/pop---arc-raiders-made-with-Voicemod.mp3"
+            },
+            "aliases": {}
+        },
+        "Minecraft": {
+            "gestures": {
+                "1": "D:/Edi\u00e7\u00e3o/Efeitos sonoros/Minecraft eating sound effect.mp3",
+                "2": "D:/Edi\u00e7\u00e3o/Efeitos sonoros/Button_Plate Click (Minecraft Sound) - Sound Effect for editing 4.mp3"
+            },
+            "aliases": {}
+        }
     }
 }

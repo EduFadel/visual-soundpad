@@ -30,13 +30,28 @@ dados_config = load_json_config(ARQUIVO_CONFIG)
 # --- 3. GERENCIAMENTO DE SONS ---
 
 def reload_sounds():
-    """Lê a configuração global e carrega os sons no Pygame."""
+    """Lê a configuração do PERFIL ATIVO e carrega os sons."""
     global sons_carregados
     print("--- Reloading sounds ---")
     
     vol = dados_config.get("volume", 1.0)
-    gestos = dados_config.get("gestures", {})
-    aliases = dados_config.get("aliases", {}) # Pega os apelidos
+    
+    # 1. Descobre qual perfil está selecionado
+    nome_perfil = dados_config.get("current_profile", "Padrão")
+    perfis = dados_config.get("profiles", {})
+    
+    # Segurança: Se o perfil sumiu, volta pro Padrão
+    if nome_perfil not in perfis:
+        nome_perfil = "Padrão"
+        # Se nem o padrão existir (caso raro), cria um vazio
+        if "Padrão" not in perfis:
+            perfis["Padrão"] = {"gestures": {}, "aliases": {}}
+        dados_config["current_profile"] = "Padrão"
+
+    # 2. Pega os dados SOMENTE desse perfil
+    dados_perfil = perfis[nome_perfil]
+    gestos = dados_perfil.get("gestures", {})
+    aliases = dados_perfil.get("aliases", {})
     
     novos_sons = {}
     
