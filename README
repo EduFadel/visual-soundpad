@@ -1,0 +1,64 @@
+# 🖐️ Visual SoundPad
+
+A computer vision-controlled soundpad. You make hand gestures (1 to 5 fingers), and audio plays through your microphone for your friends to hear.
+
+## 🚀 Installation
+
+### 1. Required Software
+* Python (3.8 or higher)
+* VoiceMeeter Banana or Potato (I use Banana to keep it simple, the normal version dont have the virtual input configs so it must be Banana Or Potato to mix the audio properly) : https://vb-audio.com/Voicemeeter/banana.htm
+
+### 2. Install Libraries
+Open the terminal in the project folder and run:
+pip install opencv-python mediapipe pygame
+
+---
+
+## 🎛️ Audio Setup (Crucial!)
+
+To ensure audio goes to Discord without echo or stuttering, configure VoiceMeeter Banana exactly like this:
+
+### In VoiceMeeter Banana:
+1. Hardware Out A1 (Top Right Corner): Select your main Headphones (prefer WDM drivers if possible).
+2. Hardware Input 1 (Your Microphone):
+   - Enable only **B1** (Sends your voice to Discord).
+   - Disable **A1** (So you don't hear yourself).
+3. Voicemeeter Input (Virtual - PC/Game Sounds):
+   - Enable only **A1** (So you hear the game).
+   - Disable **B1** (So game audio doesn't leak into the mic).
+4. Voicemeeter AUX (Virtual - Where the Soundpad plays):
+   - Enable **A1** (So you hear the sound effect).
+   - Enable **B1** (So your friends hear the sound effect).
+
+### In Windows:
+- Click the sound icon and select as default output: **VoiceMeeter Input (VB-Audio VoiceMeeter VAIO)**.
+- This ensures PC audio goes to the middle column of VoiceMeeter (Virtual Inputs).
+
+### ⚠️ Important (Anti-Robot Voice):
+Ensure both VoiceMeeter and Windows are set to **48000Hz**.
+- VoiceMeeter: Menu > System Settings > Preferred SampleRate: 48000Hz.
+- Windows: Old Sound Panel (mmsys.cpl) > Recording/Playback > Properties > Advanced > 48000Hz.
+
+---
+
+## 🎧 Discord Setup
+
+For your friends to hear high-quality audio:
+
+1. Input Device: Change to **VoiceMeeter Output (VB-Audio VoiceMeeter VAIO)**.
+2. Turn off Filters: Go to *Voice & Video* and disable:
+   - Noise Suppression (Krisp/Standard) -> Set to "None".
+   - Echo Cancellation -> Off.
+   - Noise Reduction -> Off.
+
+---
+
+## 🕹️ How to Use
+
+1. Run the script: python app.py
+2. Click the folder icons 📂 to select your audio files (MP3/WAV).
+3. Click START CAMERA.
+4. Make the gesture (e.g., 2 fingers) and hold for 1 second until the bar fills up.
+5. Theres two default audios from the game Arc Raiders for you to try to prank some raiders with robot audios!
+
+Enjoy!
