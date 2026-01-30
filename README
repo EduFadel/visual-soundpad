@@ -5,12 +5,12 @@ A computer vision-controlled soundpad. You make hand gestures (1 to 5 fingers), 
 ## 🚀 Installation
 
 ### 1. Required Software
-* Python (3.8 or higher)
-* VoiceMeeter Banana or Potato (I use Banana to keep it simple, the normal version dont have the virtual input configs so it must be Banana Or Potato to mix the audio properly) : https://vb-audio.com/Voicemeeter/banana.htm
+* Python (3.10 or 3.11 recommended)
+* VoiceMeeter Banana (To mix the audio): https://vb-audio.com/Voicemeeter/banana.htm
 
 ### 2. Install Libraries
 Open the terminal in the project folder and run:
-pip install opencv-python mediapipe pygame
+pip install -r requirements.txt
 
 ---
 
@@ -19,7 +19,7 @@ pip install opencv-python mediapipe pygame
 To ensure audio goes to Discord without echo or stuttering, configure VoiceMeeter Banana exactly like this:
 
 ### In VoiceMeeter Banana:
-1. Hardware Out A1 (Top Right Corner): Select your main Headphones (prefer WDM drivers if possible).
+1. Hardware Out A1 (Top Right Corner): Select your main Headphones (prefer WDM drivers).
 2. Hardware Input 1 (Your Microphone):
    - Enable only **B1** (Sends your voice to Discord).
    - Disable **A1** (So you don't hear yourself).
@@ -32,7 +32,7 @@ To ensure audio goes to Discord without echo or stuttering, configure VoiceMeete
 
 ### In Windows:
 - Click the sound icon and select as default output: **VoiceMeeter Input (VB-Audio VoiceMeeter VAIO)**.
-- This ensures PC audio goes to the middle column of VoiceMeeter (Virtual Inputs).
+- This ensures PC audio goes to the middle column of VoiceMeeter.
 
 ### ⚠️ Important (Anti-Robot Voice):
 Ensure both VoiceMeeter and Windows are set to **48000Hz**.
@@ -59,6 +59,5 @@ For your friends to hear high-quality audio:
 2. Click the folder icons 📂 to select your audio files (MP3/WAV).
 3. Click START CAMERA.
 4. Make the gesture (e.g., 2 fingers) and hold for 1 second until the bar fills up.
-5. Theres two default audios from the game Arc Raiders for you to try to prank some raiders with robot audios!
 
 Enjoy!

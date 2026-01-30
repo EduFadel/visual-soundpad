@@ -23,12 +23,13 @@ except Exception as e:
 rodando_ia = False
 config_audios = {} 
 sons_carregados = {} 
+VOLUME_GLOBAL = 1.0  # Default 100%
 
 # --- ENGINE FUNCTIONS ---
 
 def carregar_sons_na_memoria():
     """Reloads sounds into memory based on current config."""
-    global sons_carregados, config_audios
+    global sons_carregados, config_audios, VOLUME_GLOBAL
     print("--- Reloading Sounds ---")
     novos_sons = {}
     
@@ -39,7 +40,9 @@ def carregar_sons_na_memoria():
             try:
                 qtd = int(gesto_str)
                 som = pygame.mixer.Sound(caminho)
-                som.set_volume(0.9)
+                # Aplica o volume salvo
+                som.set_volume(VOLUME_GLOBAL)
+                
                 nome_arquivo = os.path.basename(caminho)
                 novos_sons[qtd] = {"obj": som, "txt": nome_arquivo}
                 print(f"[OK] Gesture {qtd}: {nome_arquivo}")
@@ -57,7 +60,6 @@ def contar_dedos(hand_landmarks):
     ponta_dedao = hand_landmarks.landmark[4]
     articulacao_dedao = hand_landmarks.landmark[3]
     if abs(ponta_dedao.x - articulacao_dedao.x) > 0.05:
-        # Check against pinky base to avoid false positives when fist is closed
         if abs(ponta_dedao.x - hand_landmarks.landmark[17].x) > 0.2:
              contador += 1
 
@@ -76,13 +78,11 @@ def contar_dedos(hand_landmarks):
 def desenhar_barra(img, progresso, texto):
     """Draws the progress bar on the OpenCV window."""
     x, y, w, h = 50, 400, 540, 40
-    # Background
     cv2.rectangle(img, (x, y), (x + w, y + h), (50, 50, 50), -1)
     
-    # Color based on progress
-    if progresso < 0.5: cor = (0, 0, 255)      # Red
-    elif progresso < 1.0: cor = (0, 255, 255)    # Yellow
-    else: cor = (0, 255, 0)                      # Green
+    if progresso < 0.5: cor = (0, 0, 255)
+    elif progresso < 1.0: cor = (0, 255, 255)
+    else: cor = (0, 255, 0)
     
     largura_atual = int(w * progresso)
     cv2.rectangle(img, (x, y), (x + largura_atual, y + h), cor, -1)
@@ -93,9 +93,9 @@ def loop_visao_computacional():
     """Main CV Loop running in a separate thread."""
     global rodando_ia
     
-    # Setup MediaPipe
     mp_hands = mp.solutions.hands
-    hands = mp_hands.Hands(model_complexity=0, max_num_hands=1, min_detection_confidence=0.7, min_tracking_confidence=0.7)
+    # MUDANÇA 1: max_num_hands=2 (Agora aceita duas mãos)
+    hands = mp_hands.Hands(model_complexity=0, max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.7)
     mp_draw = mp.solutions.drawing_utils
     
     cap = cv2.VideoCapture(0)
@@ -116,14 +116,17 @@ def loop_visao_computacional():
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         results = hands.process(img_rgb)
         
-        gesto_agora = 0
+        gesto_agora = 0 # Reinicia a contagem a cada frame
 
         if results.multi_hand_landmarks:
             for hand_lms in results.multi_hand_landmarks:
                 mp_draw.draw_landmarks(img, hand_lms, mp_hands.HAND_CONNECTIONS)
-                gesto_agora = contar_dedos(hand_lms)
+                
+                # MUDANÇA 2: += (Soma os dedos da mão esquerda com a direita)
+                # Se tiver 1 mão com 5 dedos e outra com 2, o total será 7.
+                gesto_agora += contar_dedos(hand_lms)
         
-        # Timer Logic
+        # O resto da lógica continua igual...
         if gesto_agora != gesto_sendo_analisado:
             gesto_sendo_analisado = gesto_agora
             inicio_contagem = time.time()
@@ -149,7 +152,6 @@ def loop_visao_computacional():
             else:
                 msg_topo = "No audio set for this gesture"
 
-        # GUI Overlay
         cv2.rectangle(img, (0,0), (640, 50), (0,0,0), -1)
         cv2.putText(img, msg_topo, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
         cv2.putText(img, f"Fingers: {gesto_agora}", (20, 100), cv2.FONT_HERSHEY_PLAIN, 2, (0, 0, 255), 2)
@@ -169,30 +171,46 @@ class SoundpadApp:
     def __init__(self, root):
         self.root = root
         self.root.title("AI Gesture Soundpad")
-        self.root.geometry("600x550")
+        self.root.geometry("600x650")
         self.root.configure(bg="#2b2b2b")
         
-        self.labels_caminhos = {} # To update UI text
+        self.labels_caminhos = {}
         
+        # 1. Carrega configuração (Volume e Gestos)
         self.carregar_configuracao()
         
         lbl_titulo = tk.Label(root, text="Gesture Configuration", bg="#2b2b2b", fg="white", font=("Arial", 16, "bold"))
         lbl_titulo.pack(pady=10)
 
         frame_grid = tk.Frame(root, bg="#2b2b2b")
-        frame_grid.pack(pady=10, padx=10, fill="both", expand=True)
+        frame_grid.pack(pady=5, padx=10, fill="both", expand=True)
 
         for i in range(1, 11):
             col = 0 if i <= 5 else 1
             row = (i - 1) if i <= 5 else (i - 6)
-            
             self.criar_slot(frame_grid, i, row, col)
+
+        # --- VOLUME CONTROL ---
+        frame_vol = tk.Frame(root, bg="#2b2b2b")
+        frame_vol.pack(pady=10, fill="x", padx=20)
+        
+        lbl_vol = tk.Label(frame_vol, text="Master Volume:", bg="#2b2b2b", fg="#cccccc", font=("Arial", 10, "bold"))
+        lbl_vol.pack(side="left")
+        
+        self.vol_scale = tk.Scale(frame_vol, from_=0, to=100, orient="horizontal", 
+                                  bg="#2b2b2b", fg="white", highlightbackground="#2b2b2b",
+                                  troughcolor="#555555", activebackground="#00ff00",
+                                  command=self.atualizar_volume)
+        
+        # 2. Define o slider com o volume carregado do JSON
+        self.vol_scale.set(VOLUME_GLOBAL * 100) 
+        self.vol_scale.pack(side="left", fill="x", expand=True, padx=10)
+        # ----------------------
 
         self.btn_action = tk.Button(root, text="START CAMERA", command=self.alternar_ia, 
                                     bg="#00ff00", fg="black", font=("Arial", 14, "bold"), height=2)
         self.btn_action.pack(pady=10, fill="x", padx=20)
         
-        # Warning label
         lbl_info = tk.Label(root, text="Configure VoiceMeeter before starting!", bg="#2b2b2b", fg="#aaaaaa")
         lbl_info.pack(pady=5)
 
@@ -211,27 +229,34 @@ class SoundpadApp:
         lbl_arquivo.pack(side="left", fill="x", expand=True)
         self.labels_caminhos[numero_gesto] = lbl_arquivo
 
-        # --- Clear Button (X) ---
         btn_limpar = tk.Button(frame_slot, text="❌", command=lambda: self.limpar_slot(numero_gesto), 
                                bg="#552222", fg="#ff5555", relief="flat", width=2)
         btn_limpar.pack(side="right", padx=2, pady=2)
 
-        # --- Select Button (Folder) ---
         btn_sel = tk.Button(frame_slot, text="📂", command=lambda: self.selecionar_arquivo(numero_gesto), 
                             bg="#555", fg="white", relief="flat")
         btn_sel.pack(side="right", padx=2, pady=2)
 
+    def atualizar_volume(self, valor_str):
+        global VOLUME_GLOBAL
+        novo_vol = float(valor_str) / 100.0
+        VOLUME_GLOBAL = novo_vol
+        
+        if sons_carregados:
+            for item in sons_carregados.values():
+                if item["obj"]:
+                    item["obj"].set_volume(VOLUME_GLOBAL)
+        
+        # Salva a configuração sempre que mexer no volume
+        # (Para otimizar, poderia salvar só ao soltar o mouse, mas assim é mais seguro)
+        self.salvar_configuracao()
+
     def limpar_slot(self, numero_gesto):
-        """Removes audio from specific slot"""
         str_num = str(numero_gesto)
         if str_num in config_audios:
-            # Remove from dict
             del config_audios[str_num]
-            # Update UI
             self.labels_caminhos[numero_gesto].config(text="...")
-            # Save
             self.salvar_configuracao()
-            # Reload memory if AI is running
             if rodando_ia:
                 carregar_sons_na_memoria()
 
@@ -245,17 +270,34 @@ class SoundpadApp:
                 carregar_sons_na_memoria()
 
     def salvar_configuracao(self):
+        """Save both gestures and volume to JSON"""
+        data = {
+            "volume": VOLUME_GLOBAL,
+            "gestures": config_audios
+        }
         with open(ARQUIVO_CONFIG, 'w') as f:
-            json.dump(config_audios, f, indent=4)
+            json.dump(data, f, indent=4)
 
     def carregar_configuracao(self):
-        global config_audios
+        """Load gestures and volume intelligently"""
+        global config_audios, VOLUME_GLOBAL
         if os.path.exists(ARQUIVO_CONFIG):
             try:
                 with open(ARQUIVO_CONFIG, 'r') as f:
-                    config_audios = json.load(f)
+                    data = json.load(f)
+                    
+                    # Verifica se é o formato novo ou antigo
+                    if "gestures" in data:
+                        # Formato Novo v5.0
+                        config_audios = data["gestures"]
+                        VOLUME_GLOBAL = data.get("volume", 1.0)
+                    else:
+                        # Formato Antigo (Migração)
+                        config_audios = data
+                        VOLUME_GLOBAL = 1.0
             except:
                 config_audios = {}
+                VOLUME_GLOBAL = 1.0
 
     def alternar_ia(self):
         global rodando_ia
